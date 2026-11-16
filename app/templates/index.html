@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block head %}{% if active %}<meta http-equiv="refresh" content="4">{% endif %}{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>新建配对任务</h2>
+  <form method="post" action="{{ url_for('create_job') }}" enctype="multipart/form-data">
+    <div class="form-row">
+      <div class="field">
+        <label for="r1">R1 文件（.fastq.gz / .fq.gz）</label>
+        <input type="file" id="r1" name="r1" accept=".gz" required>
+      </div>
+      <div class="field">
+        <label for="r2">R2 文件（.fastq.gz / .fq.gz）</label>
+        <input type="file" id="r2" name="r2" accept=".gz" required>
+      </div>
+      <div class="field">
+        <button class="btn btn-primary" type="submit">上传并开始配对</button>
+      </div>
+    </div>
+    <p class="muted">每份文件解压后不超过 {{ max_mib }} MiB；同侧 ID 重复或四行记录非法将整批失败。</p>
+  </form>
+</div>
+
+<div class="card">
+  <h2>任务列表{% if active %} <span class="muted">（处理中，页面每 4 秒自动刷新）</span>{% endif %}</h2>
+  {% if jobs %}
+  <table>
+    <thead>
+      <tr>
+        <th>任务 ID</th><th>提交时间</th><th>R1 文件</th><th>R2 文件</th>
+        <th>状态</th><th class="num">配对数</th><th class="num">缺端 R1</th><th class="num">缺端 R2</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for j in jobs %}
+      <tr>
+        <td class="mono">{{ j.id }}</td>
+        <td class="mono">{{ j.created_at }}</td>
+        <td>{{ j.r1_name }}</td>
+        <td>{{ j.r2_name }}</td>
+        <td><span class="badge st-{{ j.status }}">{{ {"queued":"排队中","processing":"处理中","done":"完成","failed":"失败"}[j.status] }}</span></td>
+        <td class="num">{{ j.paired if j.paired is not none else "—" }}</td>
+        <td class="num">{{ j.r1_only if j.r1_only is not none else "—" }}</td>
+        <td class="num">{{ j.r2_only if j.r2_only is not none else "—" }}</td>
+        <td><a class="btn" href="{{ url_for('job_detail', jid=j.id) }}">详情</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">还没有任务，请先上传两份 gzip FASTQ 文件。</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block head %}{% if job.status in ("queued", "processing") %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
+{% block title %}任务 {{ job.id }} · 双端 FASTQ 配对修复{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>任务详情 <span class="mono muted">{{ job.id }}</span></h2>
+  <dl class="kv">
+    <dt>状态</dt>
+    <dd><span class="badge st-{{ job.status }}">{{ {"queued":"排队中","processing":"处理中","done":"完成","failed":"失败"}[job.status] }}</span>
+        {% if job.status in ("queued", "processing") %}<span class="muted">处理中，页面每 3 秒自动刷新</span>{% endif %}</dd>
+    <dt>提交时间</dt><dd class="mono">{{ job.created_at }}</dd>
+    <dt>R1 文件</dt><dd>{{ job.r1_name }}</dd>
+    <dt>R2 文件</dt><dd>{{ job.r2_name }}</dd>
+    {% if job.status == "done" %}
+    <dt>配对读段对</dt><dd class="num">{{ job.paired }}</dd>
+    <dt>缺端 R1</dt><dd class="num">{{ job.r1_only }}</dd>
+    <dt>缺端 R2</dt><dd class="num">{{ job.r2_only }}</dd>
+    {% endif %}
+  </dl>
+  {% if job.status == "failed" %}
+  <p class="err">失败原因：{{ job.message }}（本批未保留任何结果文件）</p>
+  {% endif %}
+</div>
+
+{% if job.status == "done" %}
+<div class="card">
+  <h2>下载结果（gzip FASTQ）</h2>
+  <div class="dl-grid">
+    {% for key, label in outputs.items() %}
+    <div class="dl-item">
+      <div class="name">{{ label }}<br><span class="mono muted">{{ output_files[key] }}</span></div>
+      <a class="btn btn-primary" href="{{ url_for('download', jid=job.id, key=key) }}">下载</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<p><a class="btn" href="{{ url_for('index') }}">← 返回任务列表</a></p>
+{% endblock %}

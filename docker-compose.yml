@@ -1,0 +1,19 @@
+# Docker Compose：一键启动双端 FASTQ 配对修复服务
+#   docker compose up --build
+# 浏览器访问 http://localhost:8000
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - fastq_data:/data          # 数据卷：上传文件、结果、SQLite 登记库
+    mem_limit: 128m               # 容器内存上限 128 MiB
+    memswap_limit: 128m
+    environment:
+      MAX_DECOMP_BYTES: "268435456"   # 每份文件解压后上限 256 MiB
+      # SECRET_KEY: "请在生产环境设置"
+    restart: unless-stopped
+
+volumes:
+  fastq_data:
